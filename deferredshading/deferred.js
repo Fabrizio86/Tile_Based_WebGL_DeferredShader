@@ -446,6 +446,21 @@ function initializeFBO() {
     }
     else//Draw buffer is NOT supported
     {
+    	// private function to attach texture to current FBO
+    	var attachTextureToBuffer = function(texture, fbo){
+    	    var renderbuffer = gl.createRenderbuffer();
+    	    gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer);
+    	    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fbo.width, fbo.height);
+    	    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+    	    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
+	}
+	
+	// private function to attach depth texture to current FBO
+	var attachDepthToBuffer = function(texture){
+	    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, depthRGBTexture, 0);
+	    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0);
+	}
+    	
         for(var i = 0; i<4; ++i)
         {
     	    var fbo = gl.createFramebuffer();
@@ -454,32 +469,21 @@ function initializeFBO() {
     	    fbo.width = canvas.width;
     	    fbo.height = canvas.height;
 
-    	    var texture;
-    	    if(i == 0)
-    		    texture = normalTexture;
-    	    else if(i == 1)
-    		    texture = colorTexture;
-    	    else if(i == 2)
-    		    texture = positionTexture;
-    	    else if(i == 3)
-    		    texture = depthTexture;
-
-
-    	    if(i == 3)
-    	    {
-    		    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, depthRGBTexture, 0);
-    		    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.TEXTURE_2D, texture, 0);
+    	    switch(i){
+    	    	case 0:
+    	    	   attachTextureToBuffer(normalTexture, fbo);
+    	    	   break;
+    	    	case 1:
+    	    	   attachTextureToBuffer(colorTexture, fbo);
+    	    	   break;
+		case 2:
+		   attachTextureToBuffer(positionTexture, fbo);
+    	    	   break;
+		case 3:
+		   attachDepthToBuffer(depthTexture);
+    	    	   break;
     	    }
-    	    else
-    	    {
-    		    var renderbuffer = gl.createRenderbuffer();
-    		    gl.bindRenderbuffer(gl.RENDERBUFFER, renderbuffer);
-    		    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16, fbo.width, fbo.height);
-    		    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-    		    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, renderbuffer);
-    	    }
-
-
+    	    
     	    var FBOstatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
     	    if(FBOstatus != gl.FRAMEBUFFER_COMPLETE) {
     		    console.log("GL_FRAMEBUFFER_COMPLETE failed, CANNOT use FBO " + i);         
